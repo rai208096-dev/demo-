@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NEBULA LUMINA | Hyper Luxury Cosmic Dining</title>
+    <!-- Google Fonts Premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- GSAP & Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #030308;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Loader */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.2s cubic-bezier(0.77, 0, 0.18, 1);
+            pointer-events: none;
+        }
+        .loader-content {
+            text-align: center;
+        }
+        .loader-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            background: linear-gradient(135deg, #FFD966, #FF5E00);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: pulseGlow 1.5s infinite;
+        }
+        @keyframes pulseGlow {
+            0% { opacity: 0.5; text-shadow: 0 0 0px rgba(255,180,71,0);}
+            100% { opacity: 1; text-shadow: 0 0 20px rgba(255,140,0,0.8);}
+        }
+
+        /* Custom Cursor Premium */
+        .cursor-dot, .cursor-outline {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .cursor-dot {
+            width: 6px;
+            height: 6px;
+            background: #FFB347;
+            box-shadow: 0 0 10px #ff8800;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-outline {
+            width: 45px;
+            height: 45px;
+            border: 1.5px solid rgba(255, 180, 71, 0.7);
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s, background 0.2s;
+        }
+
+        /* Canvas Background */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, #0a0a1a 0%, #020205 100%);
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Premium Glass Navbar */
+        .navbar {
+            position: fixed;
+            top: 25px;
+            left: 5%;
+            width: 90%;
+            padding: 18px 40px;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(18px);
+            border-radius: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border: 1px solid rgba(255, 200, 100, 0.25);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,180,71,0.1);
+            transition: all 0.4s ease;
+        }
+        .navbar.scrolled {
+            top: 12px;
+            padding: 12px 35px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(25px);
+            border-color: rgba(255,200,100,0.5);
+        }
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFE6B0, #FFA155);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+        }
+        .nav-links a {
+            color: #f0f0f0;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            position: relative;
+            transition: 0.3s;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #FFB347, #FF7A00);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover::after, .nav-links a.active::after {
+            width: 100%;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            color: #FFB347;
+            text-shadow: 0 0 8px rgba(255,180,71,0.6);
+        }
+        .menu-toggle {
+            display: none;
+            font-size: 1.8rem;
+            color: #FFB347;
+            cursor: pointer;
+        }
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+            .navbar.active .nav-links {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: rgba(0,0,0,0.95);
+                backdrop-filter: blur(20px);
+                padding: 20px;
+                border-radius: 30px;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+        .hero-content {
+            max-width: 850px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 50px;
+            padding: 2.5rem;
+            border: 1px solid rgba(255,180,71,0.4);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5);
+            animation: fadeInUp 1.2s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(50px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .glow-text {
+            font-size: 5rem;
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FFFFFF, #FFD966, #FF7F2A, #FF3C00);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: textShine 5s linear infinite;
+        }
+        @keyframes textShine {
+            0% { background-position: 0% 50%;}
+            100% { background-position: 200% 50%;}
+        }
+        .hero-sub {
+            font-size: 1.3rem;
+            margin: 25px 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+        }
+        .btn {
+            padding: 16px 40px;
+            border-radius: 60px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            letter-spacing: 1px;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #FFB347, #FF6A00);
+            color: #111;
+            box-shadow: 0 8px 25px rgba(255, 100, 0, 0.5);
+        }
+        .btn-primary:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 15px 35px rgba(255, 100, 0, 0.8);
+        }
+        .btn-outline {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #FFB347;
+            color: #FFB347;
+            backdrop-filter: blur(4px);
+        }
+        .btn-outline:hover {
+            background: #FFB347;
+            color: #000;
+            transform: scale(1.05);
+            border-color: #fff;
+        }
+
+        /* General Sections */
+        section {
+            padding: 130px 6%;
+            position: relative;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 3.5rem;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 65px;
+            font-weight: 700;
+        }
+        .section-title span {
+            background: linear-gradient(135deg, #FFD966, #FF5733);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .section-title::after {
+            content: '';
+            width: 140px;
+            height: 3px;
+            background: linear-gradient(90deg, #FFB347, #FF3C00, transparent);
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+
+        /* Menu Cards 3D Tilt */
+        .dishes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 45px;
+        }
+        .card {
+            background: rgba(18, 18, 28, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 35px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 180, 71, 0.25);
+            transition: all 0.4s;
+            transform-style: preserve-3d;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.5);
+        }
+        .card:hover {
+            transform: translateY(-15px) rotateX(3deg);
+            border-color: #FFB347;
+            box-shadow: 0 35px 55px rgba(0,0,0,0.6), 0 0 25px rgba(255,140,0,0.3);
+        }
+        .card-img {
+            height: 270px;
+            overflow: hidden;
+            position: relative;
+        }
+        .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.7s;
+        }
+        .card:hover .card-img img {
+            transform: scale(1.12);
+        }
+        .card-content {
+            padding: 28px;
+        }
+        .price-tag {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: #FFB347;
+            margin: 15px 0 10px;
+            display: inline-block;
+            text-shadow: 0 0 10px rgba(255,180,71,0.5);
+        }
+        .rating {
+            color: #FFD966;
+            margin-bottom: 15px;
+        }
+        .order-btn {
+            background: transparent;
+            border: 1px solid #FFB347;
+            padding: 8px 20px;
+            border-radius: 40px;
+            color: #FFB347;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .order-btn:hover {
+            background: #FFB347;
+            color: #000;
+        }
+
+        /* Chef Cinematic */
+        .chef-container {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            background: radial-gradient(circle at 30% 20%, rgba(0,0,0,0.8), rgba(0,0,0,0.4));
+            border-radius: 60px;
+            padding: 50px;
+            border: 1px solid rgba(255,180,71,0.3);
+        }
+        .chef-img {
+            flex: 1;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.5);
+        }
+        .chef-img img {
+            width: 100%;
+            display: block;
+        }
+        .chef-bio {
+            flex: 1;
+        }
+        .counter-wrap {
+            display: flex;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .counter {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #FFB347;
+        }
+
+        /* Masonry Gallery */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            grid-auto-flow: dense;
+        }
+        .gallery-item {
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            transition: 0.4s;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            transition: 0.5s;
+        }
+        .gallery-item:hover img {
+            transform: scale(1.08);
+        }
+        .overlay-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(0deg, rgba(0,0,0,0.8), transparent);
+            padding: 20px;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .gallery-item:hover .overlay-caption {
+            opacity: 1;
+        }
+
+        /* Testimonial Slider */
+        .testimonial-slider {
+            overflow: hidden;
+            width: 100%;
+            position: relative;
+        }
+        .testi-track {
+            display: flex;
+            gap: 30px;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .testi-card {
+            min-width: 340px;
+            background: rgba(20,20,35,0.75);
+            backdrop-filter: blur(15px);
+            padding: 35px;
+            border-radius: 45px;
+            border: 1px solid rgba(255,180,71,0.3);
+            transition: all 0.3s;
+        }
+
+        /* Booking Form */
+        .booking-form {
+            max-width: 750px;
+            margin: auto;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 55px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+        .input-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 18px 25px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,180,71,0.5);
+            border-radius: 70px;
+            color: white;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #FFB347;
+            box-shadow: 0 0 25px rgba(255,180,71,0.4);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 70px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        /* Footer */
+        footer {
+            background: #020205;
+            padding: 70px 6% 40px;
+            border-top: 1px solid rgba(255,180,71,0.2);
+        }
+        .social-icons a {
+            font-size: 2rem;
+            margin-right: 30px;
+            color: #FFB347;
+            transition: 0.3s;
+            display: inline-block;
+        }
+        .social-icons a:hover {
+            text-shadow: 0 0 20px #FFB347;
+            transform: translateY(-5px);
+        }
+
+        /* Floating Particles Effects */
+        .floating-particle {
+            position: fixed;
+            background: radial-gradient(circle, #FFB347, transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.4;
+            animation: floatAnim 12s infinite linear;
+        }
+        @keyframes floatAnim {
+            0% { transform: translateY(0px) rotate(0deg); opacity: 0; }
+            50% { opacity: 0.7; }
+            100% { transform: translateY(-150px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .glow-text { font-size: 2.6rem; }
+            .section-title { font-size: 2.3rem; }
+            section { padding: 80px 5%; }
+            .btn-group { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+    <div class="loader-content">
+        <div class="loader-logo">✦ NEBULA LUMINA ✦</div>
+        <div style="color:#FFB347; margin-top:20px;">Crafting cosmic gastronomy...</div>
+    </div>
+</div>
+
+<div class="cursor-dot"></div>
+<div class="cursor-outline"></div>
+
+<div id="canvas-container"></div>
+
+<div class="content">
+    <nav class="navbar" id="navbar">
+        <div class="logo">NEBULA LUMINA</div>
+        <div class="menu-toggle"><i class="fas fa-bars"></i></div>
+        <div class="nav-links">
+            <a href="#" class="active">HOME</a>
+            <a href="#dishes">MENU</a>
+            <a href="#chef">CHEF</a>
+            <a href="#gallery">GALLERY</a>
+            <a href="#booking">RESERVE</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="glow-text">CELESTIAL FEAST</h1>
+            <p class="hero-sub">Experience molecular gastronomy in a multi-sensory cosmos. Michelin stars meet starlight.</p>
+            <div class="btn-group">
+                <a href="#dishes" class="btn btn-primary">EXPLORE MENU</a>
+                <a href="#booking" class="btn btn-outline">BOOK PORTAL</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Dishes -->
+    <section id="dishes">
+        <h2 class="section-title"><span>Stellar</span> Signatures</h2>
+        <div class="dishes-grid" id="dishesGrid">
+            <div class="card"><div class="card-img"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600" alt="Galaxy Burger"></div><div class="card-content"><h3>🌌 Galaxy Burger</h3><p>Black charcoal bun, gold leaf, wagyu patty, cosmic sauce</p><div class="rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><div class="price-tag">$149</div><button class="order-btn">Order Now</button></div></div>
+            <div class="card"><div class="card-img"><img src="https://images.unsplash.com/photo-1593504049359-74330189a345?w=600" alt="Fire Dragon Pizza"></div><div class="card-content"><h3>🐉 Fire Dragon Pizza</h3><p>Spicy 'dragon breath' crust, Calabrian chili, burrata</p><div class="rating">⭐️⭐️⭐️⭐️⭐️</div><div class="price-tag">$98</div><button class="order-btn">Order Now</button></div></div>
+            <div class="card"><div class="card-img"><img src="https://images.unsplash.com/photo-1617196034183-421b4917c92d?w=600" alt="Nebula Sushi"></div><div class="card-content"><h3>🌀 Nebula Sushi</h3><p>Bluefin otoro, edible 24k gold, wasabi pearls</p><div class="rating">⭐️⭐️⭐️⭐️⭐️</div><div class="price-tag">$176</div><button class="order-btn">Order Now</button></div></div>
+            <div class="card"><div class="card-img"><img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=600" alt="Cosmic Steak"></div><div class="card-content"><h3>✨ Cosmic Steak</h3><p>A5 Wagyu, activated charcoal crust, truffle galaxy foam</p><div class="price-tag">$249</div><button class="order-btn">Order Now</button></div></div>
+            <div class="card"><div class="card-img"><img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=600" alt="Lava Pasta"></div><div class="card-content"><h3>🌋 Lava Pasta</h3><p>Squid ink pasta, spicy tomato lava, lobster medallions</p><div class="price-tag">$112</div><button class="order-btn">Order Now</button></div></div>
+            <div class="card"><div class="card-img"><img src="https://images.unsplash.com/photo-1579954115545-a95591f28bfc?w=600" alt="Meteor Dessert"></div><div class="card-content"><h3>☄️ Meteor Dessert</h3><p>Dark chocolate sphere, liquid nitrogen raspberry core</p><div class="price-tag">$79</div><button class="order-btn">Order Now</button></div></div>
+        </div>
+    </section>
+
+    <!-- Chef Showcase -->
+    <section id="chef">
+        <h2 class="section-title"><span>Cosmic</span> Artisan</h2>
+        <div class="chef-container">
+            <div class="chef-img"><img src="https://images.unsplash.com/photo-1581299894007-aaa50297cf16?w=600" alt="Chef"></div>
+            <div class="chef-bio"><h3 style="font-size:2.5rem; color:#FFB347;">Chef Orion Vega</h3><p>Visionary culinary astronaut with 4 Michelin stars. His lab-meets-kitchen approach creates edible galaxies. Pioneer of zero-gravity flavor infusions.</p>
+            <div class="counter-wrap"><div><div class="counter" id="yearsCounter">0</div> Years of Mastery</div><div><div class="counter" id="awardsCounter">0</div> Global Awards</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Masonry -->
+    <section id="gallery">
+        <h2 class="section-title"><span>Visual</span> Symphony</h2>
+        <div class="gallery-grid">
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600"><div class="overlay-caption">Cosmic Ambience</div></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1544148103-0773bf10d330?w=600"><div class="overlay-caption">Molecular Art</div></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600"><div class="overlay-caption">Plating Universe</div></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600"><div class="overlay-caption">Starlight Lounge</div></div>
+        </div>
+    </section>
+
+    <!-- Testimonials Auto Slider -->
+    <section>
+        <h2 class="section-title"><span>Stellar</span> Reviews</h2>
+        <div class="testimonial-slider"><div class="testi-track" id="testiTrack"><div class="testi-card"><i class="fas fa-quote-left" style="color:#FFB347; font-size:2rem;"></i><p>"Multidimensional dining. The holographic plating blew my mind."</p><h4>— A. Sterling</h4><div>⭐⭐⭐⭐⭐</div></div><div class="testi-card"><i class="fas fa-quote-left" style="color:#FFB347;"></i><p>"Like eating in a nebula. Service and flavors are out of this world."</p><h4>— L. Zhao</h4><div>⭐⭐⭐⭐⭐</div></div><div class="testi-card"><i class="fas fa-quote-left" style="color:#FFB347;"></i><p>"Best futuristic culinary experience – pure luxury."</p><h4>— M. Dupont</h4><div>⭐⭐⭐⭐⭐</div></div></div></div>
+    </section>
+
+    <!-- Booking Section -->
+    <section id="booking">
+        <h2 class="section-title"><span>Reserve</span> Orbit</h2>
+        <div class="booking-form">
+            <div class="input-group"><input type="text" placeholder="Full Name" id="bookName"></div>
+            <div class="input-group"><input type="email" placeholder="Cosmic Email"></div>
+            <div class="input-group"><input type="date"></div>
+            <div class="input-group"><select><option>2 Travelers</option><option>4 Travelers</option><option>6+ VIP</option></select></div>
+            <button class="btn-primary submit-btn" id="bookBtn">SECURE CONSTELLATION <i class="fas fa-rocket"></i></button>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content" style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+            <div><h3 style="color:#FFB347;">LUMINA</h3><p>Where Taste Meets Infinity</p></div>
+            <div><i class="fas fa-map-marker-alt"></i> 88 Galactic Hub, Neo Tokyo</div>
+            <div class="social-icons"><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-youtube"></i></a></div>
+        </div>
+        <div style="text-align:center; margin-top:40px; border-top:1px solid #222; padding-top:25px;">© 2026 NEBULA LUMINA — Celestial Gastronomy</div>
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // Ensure loader disappears
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                if(loader) {
+                    gsap.to(loader, { duration: 1, opacity: 0, onComplete: () => { loader.style.display = 'none'; } });
+                }
+            }, 500);
+        });
+
+        // Custom cursor
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorOutline = document.querySelector('.cursor-outline');
+        if(cursorDot && cursorOutline) {
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursorDot, { duration: 0, x: e.clientX, y: e.clientY });
+                gsap.to(cursorOutline, { duration: 0.2, x: e.clientX, y: e.clientY });
+            });
+            document.querySelectorAll('a, button, .card, .btn').forEach(el => {
+                el.addEventListener('mouseenter', () => gsap.to(cursorOutline, { width: 70, height: 70, borderColor: '#ffaa44', backgroundColor: 'rgba(255,180,71,0.1)' }));
+                el.addEventListener('mouseleave', () => gsap.to(cursorOutline, { width: 45, height: 45, borderColor: 'rgba(255,180,71,0.7)', backgroundColor: 'transparent' }));
+            });
+        }
+
+        // Navbar scroll
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => { if(window.scrollY > 80) navbar.classList.add('scrolled'); else navbar.classList.remove('scrolled'); });
+        
+        // Mobile menu
+        const toggleBtn = document.querySelector('.menu-toggle');
+        if(toggleBtn) {
+            toggleBtn.addEventListener('click', () => { document.querySelector('.navbar').classList.toggle('active'); });
+        }
+
+        // ---------- THREE.JS 3D BURGER WITH FIXED VISIBILITY ----------
+        const container = document.getElementById('canvas-container');
+        if(container && typeof THREE !== 'undefined') {
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x010105);
+            scene.fog = new THREE.FogExp2(0x010105, 0.008);
+            
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.5, 6);
+            camera.lookAt(0, 0, 0);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // Enhanced Lighting
+            const ambientLight = new THREE.AmbientLight(0x332211);
+            scene.add(ambientLight);
+            const mainLight = new THREE.DirectionalLight(0xffccaa, 1.2);
+            mainLight.position.set(3, 5, 2);
+            mainLight.castShadow = true;
+            scene.add(mainLight);
+            const fillLight = new THREE.PointLight(0xff8844, 0.8);
+            fillLight.position.set(-2, 1, 3);
+            scene.add(fillLight);
+            const backLight = new THREE.PointLight(0xff5533, 0.6);
+            backLight.position.set(0, 2, -3);
+            scene.add(backLight);
+            const rimLight = new THREE.PointLight(0xffaa66, 0.7);
+            rimLight.position.set(1.5, 2, -2);
+            scene.add(rimLight);
+            
+            // Create Burger Group
+            const burgerGroup = new THREE.Group();
+            
+            // Materials
+            const bunMat = new THREE.MeshStandardMaterial({ color: 0xd49c3f, roughness: 0.3, metalness: 0.1, emissive: 0x442200, emissiveIntensity: 0.1 });
+            const pattyMat = new THREE.MeshStandardMaterial({ color: 0x6b3e1c, roughness: 0.5, metalness: 0.1 });
+            const cheeseMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, roughness: 0.2, metalness: 0.05, emissive: 0x552200, emissiveIntensity: 0.15 });
+            const tomatoMat = new THREE.MeshStandardMaterial({ color: 0xdd3b2b, roughness: 0.2 });
+            const lettuceMat = new THREE.MeshStandardMaterial({ color: 0x5a9e4e, roughness: 0.6 });
+            
+            // Bottom Bun
+            const bottomBun = new THREE.Mesh(new THREE.SphereGeometry(0.9, 64, 64), bunMat);
+            bottomBun.scale.set(1.2, 0.45, 1.2);
+            bottomBun.position.y = -0.65;
+            burgerGroup.add(bottomBun);
+            
+            // Patty
+            const patty = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.28, 48), pattyMat);
+            patty.position.y = -0.2;
+            burgerGroup.add(patty);
+            
+            // Cheese (glossy)
+            const cheese = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.12, 48), cheeseMat);
+            cheese.position.y = 0.05;
+            burgerGroup.add(cheese);
+            
+            // Tomato
+            const tomato = new THREE.Mesh(new THREE.CylinderGeometry(0.98, 0.98, 0.13, 48), tomatoMat);
+            tomato.position.y = 0.25;
+            burgerGroup.add(tomato);
+            
+            // Lettuce leaves
+            for(let i = 0; i < 6; i++) {
+                const leaf = new THREE.Mesh(new THREE.TorusGeometry(1.02, 0.08, 16, 80), lettuceMat);
+                leaf.rotation.x = Math.PI / 2;
+                leaf.rotation.z = (i * 60) * Math.PI/180;
+                leaf.position.y = 0.45;
+                burgerGroup.add(leaf);
+            }
+            
+            // Top Bun
+            const topBun = new THREE.Mesh(new THREE.SphereGeometry(1.0, 64, 64), bunMat);
+            topBun.scale.set(1.15, 0.68, 1.15);
+            topBun.position.y = 0.75;
+            burgerGroup.add(topBun);
+            
+            // Sesame seeds
+            const seedMat = new THREE.MeshStandardMaterial({ color: 0xf5e6d3 });
+            for(let i = 0; i < 80; i++) {
+                const seed = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), seedMat);
+                const angle = Math.random() * Math.PI * 2;
+                const rad = 0.95;
+                seed.position.x = Math.cos(angle) * rad * (Math.random() * 0.5 + 0.6);
+                seed.position.z = Math.sin(angle) * rad * (Math.random() * 0.5 + 0.6);
+                seed.position.y = 1.08 + Math.random() * 0.08;
+                burgerGroup.add(seed);
+            }
+            
+            scene.add(burgerGroup);
+            
+            // Floating smoke/particles
+            const particleCount = 600;
+            const particlesGeo = new THREE.BufferGeometry();
+            const posArray = new Float32Array(particleCount * 3);
+            for(let i = 0; i < particleCount; i++) {
+                posArray[i*3] = (Math.random() - 0.5) * 8;
+                posArray[i*3+1] = (Math.random() - 0.5) * 4 + 0.5;
+                posArray[i*3+2] = (Math.random() - 0.5) * 6 - 2;
+            }
+            particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const particleMat = new THREE.PointsMaterial({ color: 0xffaa66, size: 0.03, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
+            const particleSystem = new THREE.Points(particlesGeo, particleMat);
+            scene.add(particleSystem);
+            
+            // Mouse interaction
+            let mouseX = 0, mouseY = 0;
+            let targetRotY = 0, targetRotX = 0;
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+                mouseY = (event.clientY / window.innerHeight) * 2 - 1;
+                targetRotY = mouseX * 0.5;
+                targetRotX = mouseY * 0.3;
+            });
+            
+            let autoRotateAngle = 0;
+            function animate3D() {
+                requestAnimationFrame(animate3D);
+                autoRotateAngle += 0.005;
+                // Smooth follow mouse
+                burgerGroup.rotation.y += (targetRotY - burgerGroup.rotation.y) * 0.08;
+                burgerGroup.rotation.x += (targetRotX - burgerGroup.rotation.x) * 0.08;
+                // Subtle floating motion
+                burgerGroup.position.y = Math.sin(Date.now() * 0.002) * 0.03;
+                particleSystem.rotation.y += 0.002;
+                particleSystem.rotation.x += 0.001;
+                // Animate lights
+                const time = Date.now() * 0.002;
+                rimLight.intensity = 0.6 + Math.sin(time) * 0.2;
+                fillLight.intensity = 0.7 + Math.cos(time * 1.2) * 0.2;
+                renderer.render(scene, camera);
+            }
+            animate3D();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+        
+        // GSAP Scroll Animations
+        if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.utils.toArray('section, .chef-container, .booking-form').forEach(section => {
+                gsap.from(section, { scrollTrigger: { trigger: section, start: 'top 80%' }, opacity: 0, y: 70, duration: 1.2, ease: 'power3.out' });
+            });
+            gsap.from('.card', { scrollTrigger: { trigger: '#dishes', start: 'top 70%' }, scale: 0.9, opacity: 0, stagger: 0.15, duration: 0.8 });
+        }
+        
+        // Counters
+        let years = 0, awards = 0;
+        const yearsSpan = document.getElementById('yearsCounter');
+        const awardsSpan = document.getElementById('awardsCounter');
+        const counterAnim = () => { if(years < 28) { years++; if(yearsSpan) yearsSpan.innerText = years; setTimeout(counterAnim, 30); } };
+        const awardAnim = () => { if(awards < 47) { awards++; if(awardsSpan) awardsSpan.innerText = awards; setTimeout(awardAnim, 25); } };
+        if(typeof ScrollTrigger !== 'undefined') {
+            ScrollTrigger.create({ trigger: '#chef', start: 'top 70%', onEnter: () => { counterAnim(); awardAnim(); } });
+        } else {
+            setTimeout(() => { counterAnim(); awardAnim(); }, 500);
+        }
+        
+        // Testimonial slider
+        let testiIndex = 0;
+        const track = document.getElementById('testiTrack');
+        const testiCards = document.querySelectorAll('.testi-card');
+        if(track && testiCards.length) {
+            setInterval(() => {
+                testiIndex = (testiIndex + 1) % testiCards.length;
+                track.style.transform = `translateX(-${testiIndex * (testiCards[0].offsetWidth + 30)}px)`;
+            }, 3500);
+        }
+        
+        // Order buttons
+        document.querySelectorAll('.order-btn').forEach(btn => {
+            btn.addEventListener('click', () => { alert('✨ A cosmic reservation agent will contact you for this stellar dish.'); });
+        });
+        const bookBtn = document.getElementById('bookBtn');
+        if(bookBtn) bookBtn.addEventListener('click', () => { alert('🔮 Booking request sent. A starlight concierge will confirm your orbit position.'); });
+        
+        // Mouse glow effect
+        const glowDiv = document.createElement('div');
+        glowDiv.style.position = 'fixed'; glowDiv.style.width = '450px'; glowDiv.style.height = '450px'; glowDiv.style.background = 'radial-gradient(circle, rgba(255,100,30,0.12), transparent)'; glowDiv.style.borderRadius = '50%'; glowDiv.style.pointerEvents = 'none'; glowDiv.style.zIndex = '999'; document.body.appendChild(glowDiv);
+        document.addEventListener('mousemove', (e) => { gsap.to(glowDiv, { duration: 0.6, x: e.clientX - 225, y: e.clientY - 225 }); });
+        
+        // Floating particles DOM
+        for(let i = 0; i < 50; i++) {
+            let p = document.createElement('div');
+            p.classList.add('floating-particle');
+            p.style.width = Math.random() * 8 + 2 + 'px';
+            p.style.height = p.style.width;
+            p.style.left = Math.random() * 100 + '%';
+            p.style.top = Math.random() * 100 + '%';
+            p.style.animationDuration = Math.random() * 12 + 6 + 's';
+            p.style.animationDelay = Math.random() * 5 + 's';
+            document.body.appendChild(p);
+        }
+    })();
+</script>
+</body>
+</html>
